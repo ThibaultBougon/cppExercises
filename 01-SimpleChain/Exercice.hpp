@@ -115,9 +115,6 @@ namespace exercice {
     /// </note>
     /// <returns>ptr vers la donnée</returns>
     _Ty* last() {
-      _back = _head->next;
-      for (std::size_t i = 1; i < _size; ++i)
-        _back = _back->next;
       if (_back)
         return _back->data;
       return nullptr;
