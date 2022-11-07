@@ -39,7 +39,6 @@ namespace excercice {
 
     void _realloc(std::size_t newSize) {
       auto* tmp = _arr;
-      //_arr = nullptr;
       _arr = new _Ty[newSize];
       if (tmp) {
         std::memcpy(_arr, tmp, _arrSize * sizeof(_Ty));
@@ -53,8 +52,8 @@ namespace excercice {
     /// </summary>
     /// <param name="elem">Une copie de l'élement a ajouter</param>
     void push_back(_Ty elem) {
-      if(_dataIndex >= _arrSize)
-        _realloc(DEFAULTSIZE + _arrSize); // it est useless => default + _size
+      if (_dataIndex >= _arrSize)
+        _realloc(DEFAULTSIZE + _arrSize);
       _arr[_dataIndex] = elem;
       ++_dataIndex;
     }
