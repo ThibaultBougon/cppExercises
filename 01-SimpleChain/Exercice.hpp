@@ -67,6 +67,8 @@ namespace exercice {
       }
       next = tmp->next;
       prev->next = next;
+      if (!next)
+        _back = prev;
       if(tmp)
         delete tmp;
       --_size;
