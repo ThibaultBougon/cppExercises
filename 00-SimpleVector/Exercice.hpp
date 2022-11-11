@@ -19,16 +19,26 @@ namespace excercice {
   */
   // _Ty correspond au type d'objet a stocker (comme les generic en C#)
   template<typename _Ty>class SimpleVector {
+    std::size_t m_it;
+    std::size_t m_dataIndex;
+    static const std::size_t DEFAULTSIZE = 8;
+    std::size_t m_arrSize;
+
+    void _realloc(std::size_t newSize) {
+      auto* tmp = _arr;
+      _arr = new _Ty[newSize];
+      if (tmp) {
+        std::memcpy(_arr, tmp, m_arrSize * sizeof(_Ty));
+        delete[] tmp;
+      }
+      m_arrSize = newSize;
+    }
   public :
     using value_type = _Ty;
-    static const std::size_t DEFAULTSIZE = 8;
-    std::size_t _it;
-    std::size_t _arrSize;
-    std::size_t _dataIndex;
     _Ty* _arr;
 
     // Optionnel: préalloue le tableau pour un certain nombre de données
-    SimpleVector(std::size_t dsize) : _arrSize(0), _dataIndex(0), _it(1), _arr(nullptr) {
+    SimpleVector(std::size_t dsize) : m_arrSize(0), m_dataIndex(0), m_it(1), _arr(nullptr) {
       _realloc(dsize);
     }
 
@@ -37,25 +47,15 @@ namespace excercice {
       
     }
 
-    void _realloc(std::size_t newSize) {
-      auto* tmp = _arr;
-      _arr = new _Ty[newSize];
-      if (tmp) {
-        std::memcpy(_arr, tmp, _arrSize * sizeof(_Ty));
-        delete[] tmp;
-      }
-      _arrSize = newSize;
-    }
-
     /// <summary>
     /// Ajoute un élément dans le tableau par copie
     /// </summary>
     /// <param name="elem">Une copie de l'élement a ajouter</param>
     void push_back(_Ty elem) {
-      if (_dataIndex >= _arrSize)
-        _realloc(DEFAULTSIZE + _arrSize);
-      _arr[_dataIndex] = elem;
-      ++_dataIndex;
+      if (m_dataIndex >= m_arrSize)
+        _realloc(DEFAULTSIZE + m_arrSize);
+      _arr[m_dataIndex] = elem;
+      ++m_dataIndex;
     }
 
     /// <summary>
@@ -63,7 +63,7 @@ namespace excercice {
     /// </summary>
     /// <returns>Le nb d'elems</returns>
     std::size_t size() {
-      return _dataIndex;
+      return m_dataIndex;
     }
 
     /// <summary>
@@ -79,14 +79,14 @@ namespace excercice {
     /// Permet de vider le tableau.
     /// </summary>
     void clear() {
-      std::memset(_arr, 0, _arrSize);
-      _dataIndex = 0;
+      std::memset(_arr, 0, m_arrSize);
+      m_dataIndex = 0;
     }
 
     ~SimpleVector() {
       if (_arr) {
         delete[] _arr;
-        _arrSize = 0;
+        m_arrSize = 0;
       }
     }
   };

@@ -10,17 +10,24 @@ namespace exercice {
   public:
     _Ty* data;
     Node* next;
-    //Node(_Ty d) : data(d), next(nullptr) {}
   };
 
   template<typename _Ty>class SimpleChain {
+    Node<_Ty>* m_head;
+    Node<_Ty>* m_back;
+    std::size_t m_size;
+
+    Node<_Ty>* _findInArr(std::size_t index) {
+      Node<_Ty>* buff = m_head;
+      for (int i = 0; i < index; ++i)
+        buff = buff->next;
+      return buff;
+    }
+
   public:
     using value_type = _Ty;
-    Node<_Ty> *_head;
-    Node<_Ty> *_back;
-    std::size_t _size;
 
-    SimpleChain() : _size(0), _head(nullptr), _back(nullptr) {}
+    SimpleChain() : m_size(0), m_head(nullptr), m_back(nullptr) {}
 
      //<summary>
      //Ajoute la donnée data à la fin de la liste
@@ -31,15 +38,15 @@ namespace exercice {
       Node<_Ty> *newNode = new Node<_Ty>();
       newNode->data = data;
 
-      if (!_head) {
-        _head = newNode;
-        _back = _head;
-        return ++_size;
+      if (!m_head) {
+        m_head = newNode;
+        m_back = m_head;
+        return ++m_size;
       }
 
-      _back->next = newNode;
-      _back = _back->next;
-      return _size++;
+      m_back->next = newNode;
+      m_back = m_back->next;
+      return m_size++;
     }
 
     /// <summary>
@@ -47,31 +54,29 @@ namespace exercice {
     /// </summary>
     /// <param name="index">id de la data a suppr</param>
     void remove(std::size_t index) {
-      Node<_Ty>* tmp = nullptr;
-      if (index > _size)
+      Node<_Ty>* buff = nullptr;
+      if (index > m_size)
         return;
 
-      tmp = _head;
+      buff = m_head;
       if(index == 0){
-        _head = _head->next;
-        delete tmp;
-        --_size;
+        m_head = m_head->next;
+        delete buff;
+        --m_size;
         return;
       }
 
-      Node<_Ty>* prev = nullptr;
-      Node<_Ty>* next = nullptr;
-      for (std::size_t i = 0; i < index; ++i) {
-        prev = tmp;
-        tmp = tmp->next;
-      }
-      next = tmp->next;
+      Node<_Ty>* prev = _findInArr(index-1);
+      buff = prev->next;
+      Node<_Ty>* next = buff->next;
+
+      next = buff->next;
       prev->next = next;
       if (!next)
-        _back = prev;
-      if(tmp)
-        delete tmp;
-      --_size;
+        m_back = prev;
+      if(buff)
+        delete buff;
+      --m_size;
     }
 
     /// <summary>
@@ -83,17 +88,14 @@ namespace exercice {
     /// <param name="index">id de la donnée a accéder</param>
     /// <returns>ptr vers la donnée</returns>
     _Ty* at(std::size_t index) {
-      if (index > _size)
+      if (index > m_size)
         return nullptr;
       if (index == 0)
-        return _head->data;
-      if (index == _size)
-        return _back->data;
+        return m_head->data;
+      if (index == m_size)
+        return m_back->data;
 
-      Node<_Ty>* tmp = _head;
-      for (std::size_t i = 0; i < index; ++i)
-        tmp = tmp->next;
-      return tmp->data;
+      return _findInArr(index)->data;
     }
 
     /// <summary>
@@ -104,7 +106,7 @@ namespace exercice {
     /// </note>
     /// <returns>ptr vers la donnée</returns>
     _Ty* first() { 
-      return _head->data;
+      return m_head->data;
     }
 
     /// <summary>
@@ -115,8 +117,8 @@ namespace exercice {
     /// </note>
     /// <returns>ptr vers la donnée</returns>
     _Ty* last() {
-      if (_back)
-        return _back->data;
+      if (m_back)
+        return m_back->data;
       return nullptr;
     }
 
@@ -124,22 +126,22 @@ namespace exercice {
     /// Renvoi le nb d'elements dans la liste
     /// </summary>
     /// <returns></returns>
-    std::size_t size() { return _size; }
+    std::size_t size() { return m_size; }
 
     /// <summary>
     /// Supprime toutes les données de la liste
     /// </summary>
     void clear() {
-      Node<_Ty>* tmp = _head;
-      while (tmp) {
-        Node<_Ty>* d = tmp;
-        tmp = tmp->next;
+      Node<_Ty>* buff = m_head;
+      while (buff) {
+        Node<_Ty>* d = buff;
+        buff = buff->next;
         delete d;
       }
 
-      _head = nullptr;
-      _back = nullptr;
-      _size = 0;
+      m_head = nullptr;
+      m_back = nullptr;
+      m_size = 0;
     }
   };
 }
