@@ -97,12 +97,27 @@ template<typename _Ex>void test1() {
 }
 
 int main(int, char**) {
-  test1<solution::SegmentedVector<int>>();
+  /*test1<solution::SegmentedVector<int>>();
   test1<solution::SegmentedVector<TestElement>>();
 
   test1<exercice1::SegmentedVector<int>>();
-  test1<exercice1::SegmentedVector<TestElement>>();
+  test1<exercice1::SegmentedVector<TestElement>>();*/
 
+  exercice1::SegmentedVector<int> sv{};
+
+  for (int i = 0; i < 200; ++i)
+      sv.push_back(i);
+
+  sv.remove(2);
+  sv.remove(10);
+  sv.remove(40);
+  sv.remove(50);
+
+  for (int i = 0; i < 60; ++i)
+    std::cout << "at " << i << " v = " << sv.at(i) << "\n";
+
+  
+  
   /*std::cout << "Test excercice 1 succeed...\n";
 
   test2<solution::SegmentedVector<int>>();

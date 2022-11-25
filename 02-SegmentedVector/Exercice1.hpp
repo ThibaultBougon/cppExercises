@@ -76,6 +76,8 @@ namespace exercice1 {
       for (int i{ 0 }; i <= seg; ++i) {
         *index += m_noData[i];
       }
+      if (seg < (*index / SEGMENT_SIZE))
+        *index += m_noData[seg+1];
       if (*index >= m_dataIndex)
         return false;
       return true;
@@ -177,7 +179,7 @@ namespace exercice1 {
       _Ty buff = m_arr[seg][m_noData[seg]];
       m_arr[seg][m_noData[seg]] = NULL;
       ++m_noData[seg];
-      for (std::size_t i{ m_noData[seg] }; (i < SEGMENT_SIZE) && (i <= index); ++i) {
+      for (std::size_t i{ m_noData[seg] }; (i < SEGMENT_SIZE) && (i <= (index%SEGMENT_SIZE)); ++i) {
         _Ty next = m_arr[seg][i];
         m_arr[seg][i] = buff;
         buff = next;
