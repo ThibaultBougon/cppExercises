@@ -13,7 +13,7 @@ namespace exercice1 {
   * de plus petits tableaux. En pratique :
   *   On veut un tableau où foutre 100 éléments. Un SimpleVector fera une
   *   allocation de 100. SegmentedVector, lui, fera 4 allocations de 32.
-  * 
+  *
   * SimpleVector:
   * [0, 1, 2, ..., 99]
   * SegmentedVector (segment size = 32):
@@ -21,7 +21,7 @@ namespace exercice1 {
   * [32, 33, 34, ..., 63]
   * [64, 65, 66, ..., 95]
   * [96, 97, 98, ..., 127]
-  * 
+  *
   *
   * Ce design est parfois utile en pratique pour limiter les réallocations.
   * Ainsi, depuis ces 100 éléments, si nous voulons rajouter 20 éléments de plus,
@@ -32,51 +32,57 @@ namespace exercice1 {
   * Dans ce premier exercice, le nombre de segments et leur taille est fixe.
   * Aussi, nous n'avons pas besoin de la capacité à enlever des éléments des
   * tableaux (push-only).
-  * 
+  *
   * Optionnel 1:
-  * Nous voulons afficher un message d'erreur compréhensible dans le cas où 
-  * l'utilisateur utilisait void comme type de donnée. Pour cette partie, 
-  * interdit d'utiliser std::enable_if(_t) ni les concepts ou require. 
+  * Nous voulons afficher un message d'erreur compréhensible dans le cas où
+  * l'utilisateur utilisait void comme type de donnée. Pour cette partie,
+  * interdit d'utiliser std::enable_if(_t) ni les concepts ou require.
   * Le plus simple est le mieux !
-  * 
+  *
   * Optionnel 2:
-  * Pour légèrement augmenter la difficulté, il est possible de faire cet exercice 
-  * sans stocker le nombre d'éléments actuels dans les segments. A la place, on peut 
+  * Pour légèrement augmenter la difficulté, il est possible de faire cet exercice
+  * sans stocker le nombre d'éléments actuels dans les segments. A la place, on peut
   * utiliser des pointeurs. Il est même possible d'implémenter size() même sans avoir
   * le nombre d'élements par segments grâce à ces mêmes pointeurs.
-  * 
+  *
   * Optionnel 3:
   * Au lieu d'utiliser une taille et un nombre de segments constant, on peut
   * faire un système dynamique capable de changer la géométrie de notre
   * tableau. Par exemple, modifier le nombre ou la taille des segments alors
   * que la donnée est deja présente dans le tableau.
-  * 
+  *
   */
   // opt 3 == reorganise => donne les new param et ca gere tout
   template<typename _Ty>class SegmentedVector {
     void _allocNewSegment() {
       auto* buff = new _Ty[SEGMENT_SIZE];
-      m_arr[(m_dataIndex/SEGMENT_SIZE)] = &buff[0];
+      m_arr[(m_dataIndex / SEGMENT_SIZE)] = buff;
+      m_isLinFull = false;
     }
 
     void _fillArr(_Ty elem) {
-      m_arr[m_dataIndex / SEGMENT_SIZE][m_dataIndex%SEGMENT_SIZE] = elem;
+      m_arr[m_dataIndex / SEGMENT_SIZE][m_dataIndex % SEGMENT_SIZE] = elem;
       ++m_dataIndex;
+      if (m_dataIndex % SEGMENT_SIZE == 0)
+        m_isLinFull = true;
     }
 
     void _copyArr(_Ty* arr, std::size_t destIndex, std::size_t sourceIndex, std::size_t size) {
       std::memcpy(arr + destIndex, m_arr[sourceIndex], size * sizeof(_Ty));
     }
 
-    void _downSizing(int oldSegSize) {
-
-    }
-
-    void _upSizing() {
-
+    bool _reindex(std::size_t* index) {
+      std::size_t seg = *index / SEGMENT_SIZE;
+      for (int i{ 0 }; i <= seg; ++i) {
+        *index += m_noData[i];
+      }
+      if (*index >= m_dataIndex)
+        return false;
+      return true;
     }
 
   public:
+    using value_type = _Ty;
     // The maximum amount of segments
     const int SEGMENT_COUNT = 32;
     // The maximum number of elements in each segments
@@ -84,23 +90,30 @@ namespace exercice1 {
     // Note: the maximum amount of elements in this
     // SegmentedVector is then COUNT*SIZE
     std::size_t m_dataIndex;
+    bool  m_isLinFull;
     _Ty** m_arr;
+    std::size_t* m_noData;
+    static_assert(!std::is_void<_Ty>::value, "Can not be void type");
 
-    SegmentedVector() : m_dataIndex(0), m_arr(nullptr) {
-      
+    SegmentedVector() : m_dataIndex(0), m_arr(nullptr), m_isLinFull(false), m_noData(nullptr) {
+      m_noData = new std::size_t[SEGMENT_COUNT]{ 0 };
     }
     ~SegmentedVector() {
       clear();
     }
+
+    //static_assert(std::is_void<_Ty>::value, "T must not be void");
 
     /// <summary>
     /// Add an element in the array
     /// </summary>
     /// <param name="elem">The elem to add</param>
     void push_back(_Ty elem) {
-      if(!m_arr)
+      if (!m_arr) {
         m_arr = new _Ty * [SEGMENT_COUNT];
-      if (m_dataIndex % SEGMENT_SIZE == 0)
+        _allocNewSegment();
+      }
+      if (m_isLinFull)
         _allocNewSegment();
       _fillArr(elem);
     }
@@ -113,12 +126,12 @@ namespace exercice1 {
     void copy(_Ty* arr, std::size_t max = static_cast<std::size_t>(-1)) {
       if (max > m_dataIndex)
         max = m_dataIndex;
-      for (int i{0}; i <= (max / SEGMENT_SIZE); ++i) {
+      for (int i{ 0 }; i <= (max / SEGMENT_SIZE); ++i) {
         _copyArr(arr, (i * SEGMENT_SIZE), i, ((max / SEGMENT_SIZE) != i) ? SEGMENT_SIZE : (max % SEGMENT_SIZE));
       }
     }
 
-    void resize(int newSegSize = SEGMENT_SIZE, int newCountSize = SEGMENT_COUNT){
+    void resize(int newSegSize, int newCountSize) {
       int oldSegSize = SEGMENT_SIZE;
       int* ptrSegSize = (int*)(&SEGMENT_SIZE);
       *ptrSegSize = newSegSize;
@@ -131,17 +144,24 @@ namespace exercice1 {
       _Ty* buff = nullptr;
       std::size_t oldDataIndex = m_dataIndex;
       m_dataIndex = 0;
+
       for (int i{ 0 }; (i < oldDataIndex) && ((i / SEGMENT_SIZE) <= SEGMENT_COUNT); ++i) {
-        if (i % SEGMENT_SIZE == 0) {
-          newArr[i / SEGMENT_SIZE] = new _Ty[SEGMENT_SIZE];
+        if (m_dataIndex % SEGMENT_SIZE == 0) {
+          newArr[m_dataIndex / SEGMENT_SIZE] = new _Ty[SEGMENT_SIZE];
         }
         if (i % oldSegSize == 0) {
           buff = m_arr[i / oldSegSize];
+          i += m_noData[i / oldCountSize];
+          buff = &buff[m_noData[i / oldCountSize]];
         }
-        newArr[i / SEGMENT_SIZE][i % SEGMENT_SIZE] = *buff++;
+        newArr[m_dataIndex / SEGMENT_SIZE][m_dataIndex % SEGMENT_SIZE] = *buff++;
         ++m_dataIndex;
       }
 
+      std::size_t* newNoDataArray = new std::size_t[SEGMENT_COUNT]{ 0 };
+      auto oldNoDataArray = m_noData;
+      m_noData = newNoDataArray;
+      delete[] oldNoDataArray;
       for (int i{ 0 }; i < (m_dataIndex / oldSegSize); ++i) {
         delete[] oldArr[i];
       }
@@ -150,14 +170,30 @@ namespace exercice1 {
       return;
     }
 
-    void clear() {
-      if (m_arr)
+    void remove(std::size_t index) {
+      if (!_reindex(&index))
         return;
-      for (int i{0}; i < (m_dataIndex / SEGMENT_SIZE); ++i) {
+      std::size_t seg = index / SEGMENT_SIZE;
+      _Ty buff = m_arr[seg][m_noData[seg]];
+      m_arr[seg][m_noData[seg]] = NULL;
+      ++m_noData[seg];
+      for (std::size_t i{ m_noData[seg] }; (i < SEGMENT_SIZE) && (i <= index); ++i) {
+        _Ty next = m_arr[seg][i];
+        m_arr[seg][i] = buff;
+        buff = next;
+      }
+    }
+
+    void clear() {
+      if (!m_arr)
+        return;
+      for (int i{ 0 }; i < (m_dataIndex / SEGMENT_SIZE); ++i) {
         delete[] m_arr[i];
       }
       delete[] m_arr;
       m_arr = nullptr;
+      delete[] m_noData;
+      m_noData = nullptr;
     }
 
     /// <summary>
@@ -166,7 +202,18 @@ namespace exercice1 {
     /// <param name="index">The index of the element to retrieve</param>
     /// <returns></returns>
     _Ty& at(std::size_t index) {
+      if (!_reindex(&index)) {
+        static _Ty remove_me;
+        return remove_me;
+      }
+      //return nullptr;
       return m_arr[index / SEGMENT_SIZE][index % SEGMENT_SIZE];
+    }
+
+    // return false tant que le dernier segment
+    // n'est pas rempli sinon true
+    bool is_lineary_full() {
+      return m_isLinFull;
     }
 
   };
